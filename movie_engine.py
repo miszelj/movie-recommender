@@ -79,14 +79,12 @@ class MovieEngine:
         "Anything else you're looking for?",
         "Want me to find more?",
     ]
-
     GOODBYES = [
         "You're welcome! Enjoy watching!",
         "Have fun! Great choice!",
         "Enjoy the movie!",
         "Happy watching!",
     ]
-
     SYNONYMS = {
         'space': ['space', 'astronaut', 'nasa', 'spaceship', 'planet', 'galaxy', 'moon', 'orbit'],
         'robot': ['robot', 'android', 'cyborg', 'artificial', 'machine', 'automation'],
@@ -94,6 +92,7 @@ class MovieEngine:
         'murder': ['murder', 'killer', 'death', 'crime', 'detective'],
         'revenge': ['revenge', 'vengeance', 'avenge', 'payback'],
         'war': ['war', 'battle', 'soldier', 'military', 'army', 'combat'],
+
         'money': ['money', 'rich', 'wealth', 'millionaire', 'fortune'],
         'family': ['family', 'father', 'mother', 'son', 'daughter', 'parent'],
         'friends': ['friend', 'friendship', 'buddy', 'companion'],
@@ -108,6 +107,7 @@ class MovieEngine:
         'dance': ['dance', 'dancing', 'dancer', 'ballet'],
         'dog': ['dog', 'puppy', 'canine', 'pet'],
         'cat': ['cat', 'kitten', 'feline', 'pet'],
+
         'horse': ['horse', 'riding', 'equestrian', 'stallion'],
         'dinosaur': ['dinosaur', 'prehistoric', 'jurassic', 'rex'],
         'superhero': ['superhero', 'hero', 'powers', 'villain', 'marvel', 'dc'],
@@ -130,7 +130,11 @@ class MovieEngine:
 
         self.semantic = None
         if use_semantic:
-            self._init_semantic_search(data_path)
+            try:
+                self._init_semantic_search(data_path)
+            except Exception as e:
+                print(f"Semantic search disabled: {e}")
+                self.semantic = False
 
     def _build_actor_index(self):
         self.actors = {}
