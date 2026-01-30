@@ -34,5 +34,5 @@ if __name__ == '__main__':
     print("movie recommender")
     print(f"loaded {len(engine.filmy)} movies")
     print("=" * 40)
-    print("http://localhost:5000")
-    app.run(host='0.0.0.0', port=5000)
+    print("http://localhost:7860")
+    app.run(host='0.0.0.0', port=7860)
