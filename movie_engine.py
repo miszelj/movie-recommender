@@ -169,6 +169,7 @@ class MovieEngine:
                 if len(self.embeddings) == len(self.filmy):
                     print(f"Loaded embeddings from cache ({len(self.embeddings)} movies)")
                     self._load_embedding_model()
+                    self._build_genre_embeddings()
                     self.semantic = True
                     return
             except Exception as e:
@@ -193,7 +194,29 @@ class MovieEngine:
         with open(cache_path, 'wb') as f:
             pickle.dump(self.embeddings, f)
         print(f"Saved embeddings to {cache_path}")
+        self._build_genre_embeddings()
         self.semantic = True
+
+    def _build_genre_embeddings(self):
+        import numpy as np
+        all_genres = set()
+        for film in self.filmy:
+            for g in film.get('genres', []):
+                all_genres.add(g)
+        self.genre_list = sorted(all_genres)
+        self.genre_embeddings = self.model.encode(self.genre_list, convert_to_numpy=True)
+        print(f"Built embeddings for {len(self.genre_list)} genres")
+
+    def _match_genre_semantic(self, text: str, threshold: float = 0.35) -> str:
+        import numpy as np
+        query_embedding = self.model.encode(text, convert_to_numpy=True)
+        similarities = np.dot(self.genre_embeddings, query_embedding) / (
+            np.linalg.norm(self.genre_embeddings, axis=1) * np.linalg.norm(query_embedding) + 1e-10
+        )
+        best_idx = np.argmax(similarities)
+        if similarities[best_idx] >= threshold:
+            return self.genre_list[best_idx]
+        return None
 
     def _load_embedding_model(self):
         if not hasattr(self, 'model') or self.model is None:
@@ -230,6 +253,9 @@ class MovieEngine:
             if word in text_lower:
                 result['genre'] = genre
                 break
+
+        if result['genre'] is None and self.semantic:
+            result['genre'] = self._match_genre_semantic(text)
 
         for pattern, year_from, year_to in self.DECADES:
             if re.search(pattern, text_lower):
