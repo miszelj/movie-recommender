@@ -33,8 +33,18 @@ class MovieEngine:
         'horrible': (0, 4.0), 'worst': (0, 4.5), 'trash': (0, 4.5),
         'garbage': (0, 4.0), 'crap': (0, 4.5),
         'average': (5.0, 6.5), 'mediocre': (4.5, 6.0), 'okay': (5.0, 6.5), 'decent': (5.5, 7.0),
-        'underrated': (5.5, 7.5), 'niche': (5.5, 7.5),
+        'underrated': (5.5, 7.5),
         'so bad its good': (2.0, 5.0), 'guilty pleasure': (4.0, 6.0), 'b-movie': (3.0, 5.5),
+    }
+
+    POPULARITY = {
+        'niche': (500, 50000),
+        'obscure': (100, 10000),
+        'hidden gem': (500, 30000),
+        'underrated': (1000, 50000),
+        'unknown': (100, 5000),
+        'popular': (100000, None),
+        'blockbuster': (500000, None),
     }
 
     DECADES = [
@@ -207,6 +217,8 @@ class MovieEngine:
             'year_to': None,
             'rating_min': None,
             'rating_max': None,
+            'votes_min': None,
+            'votes_max': None,
             'actor': None,
             'keywords': [],
         }
@@ -244,6 +256,20 @@ class MovieEngine:
                     result['rating_max'] = rating_max
                     break
 
+        sorted_popularity = sorted(self.POPULARITY.items(), key=lambda x: len(x[0]), reverse=True)
+        for word, (votes_min, votes_max) in sorted_popularity:
+            if ' ' in word:
+                if word in text_lower:
+                    result['votes_min'] = votes_min
+                    result['votes_max'] = votes_max
+                    break
+            else:
+                pattern = r'\b' + re.escape(word) + r'\b'
+                if re.search(pattern, text_lower):
+                    result['votes_min'] = votes_min
+                    result['votes_max'] = votes_max
+                    break
+
         stop_words = {'a', 'an', 'the', 'i', 'o', 'w', 'z', 'na', 'do', 'to',
                       'film', 'movie', 'movies', 'about', 'with', 'from'}
 
@@ -253,6 +279,10 @@ class MovieEngine:
 
         for rating_word in self.RATINGS.keys():
             for part in rating_word.split():
+                stop_words.add(part.lower())
+
+        for pop_word in self.POPULARITY.keys():
+            for part in pop_word.split():
                 stop_words.add(part.lower())
 
         words = re.findall(r'\b[a-zA-Z]+\b', text_lower)
@@ -297,6 +327,13 @@ class MovieEngine:
             rating = film.get('rating', 0)
             if criteria['rating_min'] is not None:
                 if rating < criteria['rating_min'] or rating > criteria['rating_max']:
+                    return False
+            votes = film.get('votes', 0)
+            if criteria['votes_min'] is not None:
+                if votes < criteria['votes_min']:
+                    return False
+            if criteria['votes_max'] is not None:
+                if votes > criteria['votes_max']:
                     return False
             return True
 
