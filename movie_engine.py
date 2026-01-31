@@ -470,17 +470,23 @@ class MovieEngine:
 
         criteria = self.parse_query(message)
 
-        if context.get('genre') and not criteria['genre']:
-            criteria['genre'] = context['genre']
-        if context.get('year_from') and not criteria['year_from']:
-            criteria['year_from'] = context['year_from']
-            criteria['year_to'] = context['year_to']
-        if context.get('actor') and not criteria['actor']:
-            criteria['actor'] = context['actor']
-
         has_genre = criteria['genre'] is not None
         has_keywords = len(criteria['keywords']) > 0
         has_actor = criteria.get('actor') is not None
+        has_year = criteria['year_from'] is not None
+
+        is_refinement = not has_genre and not has_keywords and (has_year or has_actor)
+
+        if is_refinement and topic == 'showing':
+            if context.get('genre') and not criteria['genre']:
+                criteria['genre'] = context['genre']
+            if context.get('year_from') and not criteria['year_from']:
+                criteria['year_from'] = context['year_from']
+                criteria['year_to'] = context['year_to']
+            if context.get('actor') and not criteria['actor']:
+                criteria['actor'] = context['actor']
+            if context.get('keywords') and not criteria['keywords']:
+                criteria['keywords'] = context['keywords']
 
         if not has_genre and not has_keywords and not criteria['year_from'] and not has_actor:
             if topic == 'asking_decade':
@@ -507,15 +513,20 @@ class MovieEngine:
         return any(w in text.lower() for w in words) and len(text) < 30
 
     def _search_and_respond(self, message: str, context: dict, criteria: dict = None, use_offset: bool = False) -> tuple:
-        if criteria is None:
+        if use_offset:
+            criteria = {
+                'genre': context.get('genre'),
+                'year_from': context.get('year_from'),
+                'year_to': context.get('year_to'),
+                'actor': context.get('actor'),
+                'keywords': context.get('keywords', []),
+                'rating_min': None,
+                'rating_max': None,
+                'votes_min': None,
+                'votes_max': None,
+            }
+        elif criteria is None:
             criteria = self.parse_query(message)
-            if context.get('genre') and not criteria['genre']:
-                criteria['genre'] = context['genre']
-            if context.get('year_from') and not criteria['year_from']:
-                criteria['year_from'] = context['year_from']
-                criteria['year_to'] = context['year_to']
-            if context.get('actor') and not criteria['actor']:
-                criteria['actor'] = context['actor']
 
         offset = context.get('offset', 0) if use_offset else 0
         raw_query = context.get('last_query', message) if use_offset else message
@@ -539,7 +550,25 @@ class MovieEngine:
             suggestion += "\n" + random.choice(self.GENRE_QUESTIONS)
             return (suggestion, {'topic': 'asking_genre'})
 
-        response = random.choice(self.SUCCESS_RESPONSES) + "\n"
+        filters = []
+        if criteria['genre']:
+            filters.append(f"Genre: {criteria['genre']}")
+        if criteria['year_from']:
+            if criteria['year_from'] == criteria['year_to']:
+                filters.append(f"Year: {criteria['year_from']}")
+            else:
+                filters.append(f"Years: {criteria['year_from']}-{criteria['year_to']}")
+        if criteria.get('actor'):
+            filters.append(f"Actor: {criteria['actor'].title()}")
+        if criteria.get('rating_min') is not None:
+            filters.append(f"Rating: {criteria['rating_min']}-{criteria['rating_max']}")
+        if criteria.get('votes_min') is not None:
+            filters.append(f"Votes: {criteria['votes_min']}-{criteria['votes_max'] or '∞'}")
+
+        response = random.choice(self.SUCCESS_RESPONSES)
+        if filters:
+            response += f" [{', '.join(filters)}]"
+        response += "\n"
         for i, film in enumerate(movies, 1):
             response += self.format_movie(film, i)
         response += "\n" + random.choice(self.FOLLOWUP_QUESTIONS)
@@ -550,6 +579,7 @@ class MovieEngine:
             'year_from': criteria['year_from'],
             'year_to': criteria['year_to'],
             'actor': criteria.get('actor'),
+            'keywords': criteria.get('keywords', []),
             'offset': offset,
             'last_query': raw_query,
         }
