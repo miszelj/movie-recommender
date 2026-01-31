@@ -2,6 +2,7 @@ import json
 import re
 import os
 import random
+import math
 
 
 class MovieEngine:
@@ -319,7 +320,9 @@ class MovieEngine:
             for idx in np.argsort(similarities)[::-1]:
                 film = self.filmy[idx]
                 if matches(film):
-                    candidates.append((similarities[idx], film))
+                    popularity_boost = math.log10(film.get('votes', 1) + 1) * 0.05
+                    score = similarities[idx] + popularity_boost
+                    candidates.append((score, film))
                     if len(candidates) >= limit * 3:
                         break
             shuffled = light_shuffle(candidates, limit)
@@ -334,7 +337,8 @@ class MovieEngine:
             hits = sum(1 for w in criteria['keywords'] if w in desc or w in title)
             if criteria['keywords'] and hits == 0 and not criteria.get('actor'):
                 continue
-            score = hits * 100 + film.get('rating', 0)
+            popularity_boost = math.log10(film.get('votes', 1) + 1) * 5
+            score = hits * 100 + film.get('rating', 0) + popularity_boost
             results.append((score, film))
 
         results.sort(key=lambda x: x[0], reverse=True)
