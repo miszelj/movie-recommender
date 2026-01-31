@@ -8,10 +8,11 @@ import math
 class MovieEngine:
 
     GENRES = {
-        'horror': 'Horror', 'scary': 'Horror', 'thriller': 'Thriller',
-        'comedy': 'Comedy', 'funny': 'Comedy',
-        'romance': 'Romance', 'romantic': 'Romance',
-        'action': 'Action',
+        'horror': 'Horror', 'scary': 'Horror', 'terrifying': 'Horror', 'creepy': 'Horror', 'spooky': 'Horror',
+        'thriller': 'Thriller', 'suspense': 'Thriller', 'tense': 'Thriller',
+        'comedy': 'Comedy', 'funny': 'Comedy', 'hilarious': 'Comedy', 'laugh': 'Comedy',
+        'romance': 'Romance', 'romantic': 'Romance', 'love': 'Romance',
+        'action': 'Action', 'explosive': 'Action', 'fighting': 'Action',
         'sci-fi': 'Science Fiction', 'scifi': 'Science Fiction', 'science fiction': 'Science Fiction',
         'fantasy': 'Fantasy',
         'animation': 'Animation', 'animated': 'Animation',
