@@ -8,22 +8,31 @@ import math
 class MovieEngine:
 
     GENRES = {
-        'horror': 'Horror', 'scary': 'Horror', 'terrifying': 'Horror', 'creepy': 'Horror', 'spooky': 'Horror',
-        'thriller': 'Thriller', 'suspense': 'Thriller', 'tense': 'Thriller',
+        'horror': 'Horror', 'scary': 'Horror', 'terrifying': 'Horror', 'creepy': 'Horror',
+        'spooky': 'Horror', 'frightening': 'Horror', 'nightmare': 'Horror', 'haunted': 'Horror',
+        'thriller': 'Thriller', 'suspense': 'Thriller', 'tense': 'Thriller', 'suspenseful': 'Thriller',
+        'gripping': 'Thriller', 'intense': 'Thriller',
         'comedy': 'Comedy', 'funny': 'Comedy', 'hilarious': 'Comedy', 'laugh': 'Comedy',
-        'romance': 'Romance', 'romantic': 'Romance', 'love': 'Romance',
-        'action': 'Action', 'explosive': 'Action', 'fighting': 'Action',
+        'humorous': 'Comedy', 'witty': 'Comedy', 'silly': 'Comedy',
+        'romance': 'Romance', 'romantic': 'Romance', 'love story': 'Romance', 'heartfelt': 'Romance',
+        'action': 'Action', 'explosive': 'Action', 'fighting': 'Action', 'adrenaline': 'Action',
+        'exciting': 'Action', 'stunts': 'Action',
         'sci-fi': 'Science Fiction', 'scifi': 'Science Fiction', 'science fiction': 'Science Fiction',
-        'fantasy': 'Fantasy',
-        'animation': 'Animation', 'animated': 'Animation',
-        'drama': 'Drama',
-        'crime': 'Crime',
-        'war': 'War', 'western': 'Western',
-        'documentary': 'Documentary',
-        'family': 'Family', 'music': 'Music', 'musical': 'Music',
-        'mystery': 'Mystery',
-        'history': 'History', 'historical': 'History',
-        'adventure': 'Adventure',
+        'futuristic': 'Science Fiction', 'space': 'Science Fiction', 'aliens': 'Science Fiction',
+        'fantasy': 'Fantasy', 'magical': 'Fantasy', 'mythical': 'Fantasy', 'enchanted': 'Fantasy',
+        'animation': 'Animation', 'animated': 'Animation', 'cartoon': 'Animation',
+        'drama': 'Drama', 'dramatic': 'Drama', 'emotional': 'Drama', 'tearjerker': 'Drama',
+        'moving': 'Drama', 'heartbreaking': 'Drama',
+        'crime': 'Crime', 'criminal': 'Crime', 'heist': 'Crime', 'gangster': 'Crime', 'mafia': 'Crime',
+        'detective': 'Crime', 'spy': 'Crime',
+        'war': 'War', 'military': 'War', 'battle': 'War', 'soldier': 'War',
+        'western': 'Western', 'cowboy': 'Western',
+        'documentary': 'Documentary', 'docuseries': 'Documentary',
+        'family': 'Family', 'kids': 'Family', 'children': 'Family',
+        'music': 'Music', 'musical': 'Music', 'singing': 'Music', 'concert': 'Music',
+        'mystery': 'Mystery', 'mysterious': 'Mystery', 'whodunit': 'Mystery', 'enigma': 'Mystery',
+        'history': 'History', 'historical': 'History', 'period': 'History', 'ancient': 'History',
+        'adventure': 'Adventure', 'adventurous': 'Adventure', 'expedition': 'Adventure', 'quest': 'Adventure',
     }
 
     RATINGS = {
@@ -254,10 +263,6 @@ class MovieEngine:
                 result['genre'] = genre
                 break
 
-        if result['genre'] is None and self.semantic:
-            word_count = len([w for w in text.split() if len(w) > 2])
-            if word_count <= 2:
-                result['genre'] = self._match_genre_semantic(text, threshold=0.5)
 
         for pattern, year_from, year_to in self.DECADES:
             if re.search(pattern, text_lower):
