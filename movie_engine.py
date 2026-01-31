@@ -394,7 +394,7 @@ class MovieEngine:
             similarity, film = candidate
             votes = film.get('votes', 1)
             vote_score = math.log10(votes + 1) / 7
-            return similarity * 0.7 + vote_score * 0.3
+            return similarity * 0.5 + vote_score * 0.5
 
         ranked = sorted(candidates, key=weighted_score, reverse=True)
         return [film for _, film in ranked[:limit]]
