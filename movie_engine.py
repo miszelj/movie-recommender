@@ -390,11 +390,17 @@ class MovieEngine:
             candidates.sort(key=lambda x: x[0], reverse=True)
             candidates = candidates[:50]
 
+        query_words = [w.lower() for w in (raw_query or '').split() if len(w) > 2]
+
         def weighted_score(candidate):
             similarity, film = candidate
             votes = film.get('votes', 1)
             vote_score = math.log10(votes + 1) / 7
-            return similarity * 0.5 + vote_score * 0.5
+            overview = film.get('overview', '').lower()
+            title = film.get('title', '').lower()
+            overview_hits = sum(1 for w in query_words if w in overview or w in title)
+            overview_boost = min(overview_hits / max(len(query_words), 1), 1.0)
+            return similarity * 0.5 + overview_boost * 0.4 + vote_score * 0.1
 
         ranked = sorted(candidates, key=weighted_score, reverse=True)
         return [film for _, film in ranked[:limit]]
