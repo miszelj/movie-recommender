@@ -300,53 +300,39 @@ class MovieEngine:
                     return False
             return True
 
-        def light_shuffle(results_with_score, limit):
-            if not shuffle or len(results_with_score) <= limit:
-                return results_with_score[:limit]
-            candidates = results_with_score[:limit * 3]
-            shuffled = []
-            for score, film in candidates:
-                noise = random.uniform(0, 0.15) * abs(score) if score else random.uniform(0, 0.5)
-                shuffled.append((score + noise, film))
-            shuffled.sort(key=lambda x: x[0], reverse=True)
-            return shuffled[:limit]
-
         if self.semantic and raw_query:
             query_embedding = self.model.encode(raw_query, convert_to_numpy=True)
             similarities = np.dot(self.embeddings, query_embedding) / (
                 np.linalg.norm(self.embeddings, axis=1) * np.linalg.norm(query_embedding) + 1e-10
             )
             candidates = []
-            has_rating_filter = criteria['rating_min'] is not None
             for idx in np.argsort(similarities)[::-1]:
                 film = self.filmy[idx]
                 if matches(film):
-                    boost_mult = 0.2 if has_rating_filter else 0.05
-                    popularity_boost = math.log10(film.get('votes', 1) + 1) * boost_mult
-                    score = similarities[idx] + popularity_boost
-                    candidates.append((score, film))
-                    if len(candidates) >= limit * 3:
+                    candidates.append((similarities[idx], film))
+                    if len(candidates) >= 50:
                         break
-            shuffled = light_shuffle(candidates, limit)
-            return [film for _, film in shuffled]
+        else:
+            candidates = []
+            for film in self.filmy:
+                if not matches(film):
+                    continue
+                desc = film.get('overview', '').lower()
+                title = film.get('title', '').lower()
+                hits = sum(1 for w in criteria['keywords'] if w in desc or w in title)
+                if criteria['keywords'] and hits == 0 and not criteria.get('actor'):
+                    continue
+                candidates.append((hits, film))
+            candidates.sort(key=lambda x: x[0], reverse=True)
+            candidates = candidates[:50]
 
-        results = []
-        for film in self.filmy:
-            if not matches(film):
-                continue
-            desc = film.get('overview', '').lower()
-            title = film.get('title', '').lower()
-            hits = sum(1 for w in criteria['keywords'] if w in desc or w in title)
-            if criteria['keywords'] and hits == 0 and not criteria.get('actor'):
-                continue
-            boost_mult = 20 if criteria['rating_min'] is not None else 5
-            popularity_boost = math.log10(film.get('votes', 1) + 1) * boost_mult
-            score = hits * 100 + film.get('rating', 0) + popularity_boost
-            results.append((score, film))
-
-        results.sort(key=lambda x: x[0], reverse=True)
-        shuffled = light_shuffle(results, limit)
-        return [film for _, film in shuffled]
+        by_votes = sorted(candidates, key=lambda x: x[1].get('votes', 0), reverse=True)
+        top_popular = by_votes[:limit * 3]
+        if shuffle and len(top_popular) > limit:
+            selected = random.sample(top_popular, limit)
+        else:
+            selected = top_popular[:limit]
+        return [film for _, film in selected]
 
     def format_movie(self, film: dict, number: int) -> str:
         title = film.get('title', 'Unknown')
