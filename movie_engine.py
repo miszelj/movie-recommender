@@ -422,6 +422,15 @@ class MovieEngine:
         words = ['thanks', 'thank', 'bye', 'goodbye', 'cheers']
         return any(w in text.lower() for w in words)
 
+    def is_random(self, text: str) -> bool:
+        phrases = ['surprise me', 'random', 'anything', 'whatever', 'idk', "don't know", 'no idea', 'you choose', 'dealer']
+        text_lower = text.lower()
+        return any(p in text_lower for p in phrases)
+
+    def get_random_movies(self, limit: int = 5) -> list:
+        good_movies = [f for f in self.filmy if f.get('rating', 0) >= 7.0 and f.get('votes', 0) >= 10000]
+        return random.sample(good_movies, min(limit, len(good_movies)))
+
     def respond(self, message: str, context: dict = None) -> tuple:
         if context is None:
             context = {}
@@ -441,6 +450,14 @@ class MovieEngine:
         if self.is_thanks(message):
             return (random.choice(self.GOODBYES), {'topic': 'end'})
 
+        if self.is_random(message):
+            movies = self.get_random_movies()
+            response = "Here are some random picks for you:\n"
+            for i, film in enumerate(movies, 1):
+                response += self.format_movie(film, i)
+            response += "\n" + random.choice(self.FOLLOWUP_QUESTIONS)
+            return (response, {'topic': 'showing'})
+
         if topic == 'showing' and self._wants_more(message):
             context['offset'] = context.get('offset', 0) + 5
             return self._search_and_respond(message, context, use_offset=True)
@@ -458,6 +475,8 @@ class MovieEngine:
         if context.get('year_from') and not criteria['year_from']:
             criteria['year_from'] = context['year_from']
             criteria['year_to'] = context['year_to']
+        if context.get('actor') and not criteria['actor']:
+            criteria['actor'] = context['actor']
 
         has_genre = criteria['genre'] is not None
         has_keywords = len(criteria['keywords']) > 0
@@ -495,6 +514,8 @@ class MovieEngine:
             if context.get('year_from') and not criteria['year_from']:
                 criteria['year_from'] = context['year_from']
                 criteria['year_to'] = context['year_to']
+            if context.get('actor') and not criteria['actor']:
+                criteria['actor'] = context['actor']
 
         offset = context.get('offset', 0) if use_offset else 0
         raw_query = context.get('last_query', message) if use_offset else message
@@ -528,6 +549,7 @@ class MovieEngine:
             'genre': criteria['genre'],
             'year_from': criteria['year_from'],
             'year_to': criteria['year_to'],
+            'actor': criteria.get('actor'),
             'offset': offset,
             'last_query': raw_query,
         }
