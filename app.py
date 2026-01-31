@@ -31,8 +31,8 @@ def chat():
 
 if __name__ == '__main__':
     print("=" * 40)
-    print("movie recommender")
-    print(f"loaded {len(engine.filmy)} movies")
+    print("Movie Recommender")
+    print(f"Loaded {len(engine.filmy)} movies")
     print("=" * 40)
-    print("http://localhost:5000")
+    print("Running on http://localhost:5000")
     app.run(host='0.0.0.0', port=5000)
