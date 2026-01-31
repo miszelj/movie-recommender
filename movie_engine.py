@@ -317,10 +317,12 @@ class MovieEngine:
                 np.linalg.norm(self.embeddings, axis=1) * np.linalg.norm(query_embedding) + 1e-10
             )
             candidates = []
+            has_rating_filter = criteria['rating_min'] is not None
             for idx in np.argsort(similarities)[::-1]:
                 film = self.filmy[idx]
                 if matches(film):
-                    popularity_boost = math.log10(film.get('votes', 1) + 1) * 0.05
+                    boost_mult = 0.2 if has_rating_filter else 0.05
+                    popularity_boost = math.log10(film.get('votes', 1) + 1) * boost_mult
                     score = similarities[idx] + popularity_boost
                     candidates.append((score, film))
                     if len(candidates) >= limit * 3:
@@ -337,7 +339,8 @@ class MovieEngine:
             hits = sum(1 for w in criteria['keywords'] if w in desc or w in title)
             if criteria['keywords'] and hits == 0 and not criteria.get('actor'):
                 continue
-            popularity_boost = math.log10(film.get('votes', 1) + 1) * 5
+            boost_mult = 20 if criteria['rating_min'] is not None else 5
+            popularity_boost = math.log10(film.get('votes', 1) + 1) * boost_mult
             score = hits * 100 + film.get('rating', 0) + popularity_boost
             results.append((score, film))
 
