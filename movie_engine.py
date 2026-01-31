@@ -255,9 +255,10 @@ class MovieEngine:
                 break
 
         if result['genre'] is None and self.semantic:
-            word_count = len([w for w in text.split() if len(w) > 2])
-            if word_count <= 2:
-                result['genre'] = self._match_genre_semantic(text, threshold=0.5)
+            genre_stop = {'movie', 'movies', 'film', 'films', 'show', 'shows', 'good', 'best', 'great'}
+            clean_words = [w for w in text_lower.split() if w not in genre_stop and len(w) > 2]
+            if 1 <= len(clean_words) <= 2:
+                result['genre'] = self._match_genre_semantic(' '.join(clean_words), threshold=0.5)
 
         for pattern, year_from, year_to in self.DECADES:
             if re.search(pattern, text_lower):
