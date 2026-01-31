@@ -279,7 +279,7 @@ class MovieEngine:
 
         return result
 
-    def search_movies(self, criteria: dict, limit: int = 5, raw_query: str = None, shuffle: bool = True) -> list:
+    def search_movies(self, criteria: dict, limit: int = 5, raw_query: str = None) -> list:
         import numpy as np
 
         def matches(film):
@@ -327,12 +327,7 @@ class MovieEngine:
             candidates = candidates[:50]
 
         by_votes = sorted(candidates, key=lambda x: x[1].get('votes', 0), reverse=True)
-        top_popular = by_votes[:limit * 3]
-        if shuffle and len(top_popular) > limit:
-            selected = random.sample(top_popular, limit)
-        else:
-            selected = top_popular[:limit]
-        return [film for _, film in selected]
+        return [film for _, film in by_votes[:limit]]
 
     def format_movie(self, film: dict, number: int) -> str:
         title = film.get('title', 'Unknown')
@@ -438,7 +433,8 @@ class MovieEngine:
                 criteria['year_to'] = context['year_to']
 
         offset = context.get('offset', 0) if use_offset else 0
-        movies = self.search_movies(criteria, limit=5 + offset, raw_query=message)
+        raw_query = context.get('last_query', message) if use_offset else message
+        movies = self.search_movies(criteria, limit=5 + offset, raw_query=raw_query)
 
         if offset:
             movies = movies[offset:] if len(movies) > offset else []
@@ -469,6 +465,7 @@ class MovieEngine:
             'year_from': criteria['year_from'],
             'year_to': criteria['year_to'],
             'offset': offset,
+            'last_query': raw_query,
         }
 
         return (response, new_context)
